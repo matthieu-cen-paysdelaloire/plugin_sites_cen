@@ -49,8 +49,7 @@
     <property name="minimumSize">
      <size>
       <width>590</width>
-      <height>1600</height>
-     </size>
+      <height>1550</height> </size>
     </property>
 
     <widget class="QLabel" name="label_rnx">
@@ -69,7 +68,7 @@
     </widget>
     <widget class="QSpinBox" name="spinRNX">
      <property name="geometry"><rect><x>300</x><y>35</y><width>280</width><height>30</height></rect></property>
-     <property name="suffix"><string> m²</string></property>
+     <property name="minimum"><number>-1</number></property> <property name="value"><number>-1</number></property>  <property name="specialValueText"><string>-- À renseigner --</string></property>      <property name="suffix"><string> m²</string></property>
      <property name="maximum"><number>99999999</number></property>
     </widget>
 
@@ -85,25 +84,31 @@
     <widget class="QLabel" name="label_contrats">
      <property name="geometry"><rect><x>10</x><y>150</y><width>180</width><height>20</height></rect></property>
      <property name="text"><string>Nb contrats :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QSpinBox" name="spinContrats">
      <property name="geometry"><rect><x>10</x><y>175</y><width>180</width><height>30</height></rect></property>
+     <property name="minimum"><number>-1</number></property> <property name="value"><number>-1</number></property><property name="specialValueText"><string>-- À renseigner --</string></property>
     </widget>
 
     <widget class="QLabel" name="label_agri">
      <property name="geometry"><rect><x>200</x><y>150</y><width>190</width><height>20</height></rect></property>
      <property name="text"><string>Nb agriculteurs :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QSpinBox" name="spinAgri">
      <property name="geometry"><rect><x>200</x><y>175</y><width>190</width><height>30</height></rect></property>
+     <property name="minimum"><number>-1</number></property> <property name="value"><number>-1</number></property><property name="specialValueText"><string>-- À renseigner --</string></property>
     </widget>
 
     <widget class="QLabel" name="label_surf_contrat">
      <property name="geometry"><rect><x>400</x><y>150</y><width>190</width><height>20</height></rect></property>
      <property name="text"><string>Surf. contrat (m²) :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QSpinBox" name="spinSurfContrat">
      <property name="geometry"><rect><x>400</x><y>175</y><width>190</width><height>30</height></rect></property>
+     <property name="minimum"><number>-1</number></property> <property name="value"><number>-1</number></property>  <property name="specialValueText"><string>-- À renseigner --</string></property>      <property name="suffix"><string> m²</string></property>
     </widget>
 
     <widget class="QLabel" name="label_type_milieu">
@@ -118,6 +123,7 @@
     <widget class="QLabel" name="label_nature">
      <property name="geometry"><rect><x>10</x><y>290</y><width>280</width><height>20</height></rect></property>
      <property name="text"><string>Nature site INPN :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QComboBox" name="cbNatureInpn">
      <property name="geometry"><rect><x>10</x><y>315</y><width>280</width><height>30</height></rect></property>
@@ -126,6 +132,7 @@
     <widget class="QLabel" name="label_geol">
      <property name="geometry"><rect><x>300</x><y>290</y><width>280</width><height>20</height></rect></property>
      <property name="text"><string>Géol. site INPN :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QComboBox" name="cbGeolInpn">
      <property name="geometry"><rect><x>300</x><y>315</y><width>280</width><height>30</height></rect></property>
@@ -143,6 +150,7 @@
     <widget class="QLabel" name="label_carto_hab">
      <property name="geometry"><rect><x>10</x><y>430</y><width>280</width><height>20</height></rect></property>
      <property name="text"><string>Carto. habitats :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QComboBox" name="cbCartoHab">
      <property name="geometry"><rect><x>10</x><y>455</y><width>280</width><height>30</height></rect></property>
@@ -151,6 +159,7 @@
     <widget class="QLabel" name="label_typo_hab">
      <property name="geometry"><rect><x>300</x><y>430</y><width>280</width><height>20</height></rect></property>
      <property name="text"><string>Typo. carto :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QComboBox" name="cbTypoHab">
      <property name="geometry"><rect><x>300</x><y>455</y><width>280</width><height>30</height></rect></property>
@@ -159,17 +168,21 @@
     <widget class="QLabel" name="label_gestionnaire">
      <property name="geometry"><rect><x>10</x><y>500</y><width>280</width><height>20</height></rect></property>
      <property name="text"><string>Gestionnaire du site :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QLineEdit" name="txtGestionnaire">
      <property name="geometry"><rect><x>10</x><y>525</y><width>280</width><height>30</height></rect></property>
+     <property name="placeholderText"><string>-- À renseigner --</string></property>
     </widget>
 
     <widget class="QLabel" name="label_surf_libre">
      <property name="geometry"><rect><x>300</x><y>500</y><width>280</width><height>20</height></rect></property>
      <property name="text"><string>Surf. libre évolution (m²) :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QSpinBox" name="spinLibreEvo">
      <property name="geometry"><rect><x>300</x><y>525</y><width>280</width><height>30</height></rect></property>
+     <property name="minimum"><number>-1</number></property> <property name="value"><number>-1</number></property>  <property name="specialValueText"><string>-- À renseigner --</string></property>  <property name="suffix"><string> m²</string></property>
     </widget>
 
     <widget class="QLabel" name="label_doc_pres">
@@ -184,14 +197,17 @@
     <widget class="QLabel" name="label_doc_nom">
      <property name="geometry"><rect><x>300</x><y>570</y><width>280</width><height>20</height></rect></property>
      <property name="text"><string>Nom du document :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QLineEdit" name="txtDocNom">
      <property name="geometry"><rect><x>300</x><y>595</y><width>280</width><height>30</height></rect></property>
+     <property name="placeholderText"><string>-- À renseigner --</string></property>
     </widget>
 
     <widget class="QLabel" name="label_doc_eval">
      <property name="geometry"><rect><x>10</x><y>640</y><width>580</width><height>20</height></rect></property>
      <property name="text"><string>Évaluation Doc :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QComboBox" name="cbDocEval">
      <property name="geometry"><rect><x>10</x><y>665</y><width>580</width><height>30</height></rect></property>
@@ -199,7 +215,8 @@
 
     <widget class="QLabel" name="label_date_ini">
      <property name="geometry"><rect><x>10</x><y>710</y><width>180</width><height>20</height></rect></property>
-     <property name="text"><string>Date Début :</string></property>
+     <property name="text"><string>Date initiale :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QDateEdit" name="dateIni">
      <property name="geometry"><rect><x>10</x><y>735</y><width>180</width><height>30</height></rect></property>
@@ -208,7 +225,8 @@
 
     <widget class="QLabel" name="label_date_maj">
      <property name="geometry"><rect><x>200</x><y>710</y><width>190</width><height>20</height></rect></property>
-     <property name="text"><string>Date MAJ :</string></property>
+     <property name="text"><string>Date MàJ :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QDateEdit" name="dateMaj">
      <property name="geometry"><rect><x>200</x><y>735</y><width>190</width><height>30</height></rect></property>
@@ -217,7 +235,8 @@
 
     <widget class="QLabel" name="label_date_fin">
      <property name="geometry"><rect><x>400</x><y>710</y><width>190</width><height>20</height></rect></property>
-     <property name="text"><string>Date Fin :</string></property>
+     <property name="text"><string>Date fin :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QDateEdit" name="dateFin">
      <property name="geometry"><rect><x>400</x><y>735</y><width>190</width><height>30</height></rect></property>
@@ -227,25 +246,31 @@
     <widget class="QLabel" name="label_surf_doc">
      <property name="geometry"><rect><x>10</x><y>780</y><width>580</width><height>20</height></rect></property>
      <property name="text"><string>Surf. Doc Gestion (m²) :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QSpinBox" name="spinSurfDoc">
      <property name="geometry"><rect><x>10</x><y>805</y><width>580</width><height>30</height></rect></property>
+     <property name="minimum"><number>-1</number></property> <property name="value"><number>-1</number></property>  <property name="specialValueText"><string>-- À renseigner --</string></property>  <property name="suffix"><string> m²</string></property>
     </widget>
 
     <widget class="QLabel" name="label_url_inpn">
      <property name="geometry"><rect><x>10</x><y>850</y><width>580</width><height>20</height></rect></property>
      <property name="text"><string>URL Fiche INPN :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QLineEdit" name="txtUrlInpn">
      <property name="geometry"><rect><x>10</x><y>875</y><width>580</width><height>30</height></rect></property>
+     <property name="placeholderText"><string>-- À renseigner --</string></property>
     </widget>
 
     <widget class="QLabel" name="label_url_cen">
      <property name="geometry"><rect><x>10</x><y>920</y><width>580</width><height>20</height></rect></property>
      <property name="text"><string>URL Fiche CEN :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QLineEdit" name="txtUrlCen">
      <property name="geometry"><rect><x>10</x><y>945</y><width>580</width><height>30</height></rect></property>
+     <property name="placeholderText"><string>-- À renseigner --</string></property>
     </widget>
 
     <widget class="QLabel" name="label_ouverture">
@@ -260,17 +285,21 @@
     <widget class="QLabel" name="label_desc">
      <property name="geometry"><rect><x>10</x><y>1060</y><width>580</width><height>20</height></rect></property>
      <property name="text"><string>Description du site :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QTextEdit" name="txtDescription">
      <property name="geometry"><rect><x>10</x><y>1085</y><width>580</width><height>120</height></rect></property>
+     <property name="placeholderText"><string>-- À renseigner --</string></property>
     </widget>
 
     <widget class="QLabel" name="label_url_photo">
      <property name="geometry"><rect><x>10</x><y>1220</y><width>580</width><height>20</height></rect></property>
      <property name="text"><string>URL Photo :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QLineEdit" name="txtUrlPhoto">
      <property name="geometry"><rect><x>10</x><y>1245</y><width>580</width><height>30</height></rect></property>
+     <property name="placeholderText"><string>-- À renseigner --</string></property>
     </widget>
 
     <widget class="QLabel" name="label_sensi">
@@ -294,9 +323,11 @@
     <widget class="QLabel" name="label_remq_sensi">
      <property name="geometry"><rect><x>10</x><y>1360</y><width>580</width><height>20</height></rect></property>
      <property name="text"><string>Remarque sensibilité :</string></property>
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
     </widget>
     <widget class="QTextEdit" name="txtRemqSensibilite">
      <property name="geometry"><rect><x>10</x><y>1385</y><width>580</width><height>100</height></rect></property>
+     <property name="placeholderText"><string>-- À renseigner --</string></property>
     </widget>
 
    </widget>
