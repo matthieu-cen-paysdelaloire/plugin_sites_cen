@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/plugins/plugin_sites_cen" >
-        <file>icon.png</file>
-    </qresource>
-</RCC>

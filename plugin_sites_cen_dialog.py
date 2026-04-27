@@ -1,61 +1,116 @@
 # -*- coding: utf-8 -*-
 import os
 from qgis.PyQt import uic, QtWidgets, QtCore, QtGui
+from qgis.core import NULL
 
+# Permet de créer la connexion entre notre fichier .ui contennant les codes pour le design de notre interface et notre fichier python
+# Permet de modifier l'aspect visuel de notre plugin, sans toucher à la logique du code
 UI_FILE = os.path.join(os.path.dirname(__file__), 'plugin_sites_cen_dialog_base.ui')
 FORM_CLASS, _ = uic.loadUiType(UI_FILE)
 
+# Configuration de la fonction permettant de lancer le script python 
 class AttributeEditorSitesCENDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None, iface=None):
         super(AttributeEditorSitesCENDialog, self).__init__(parent)
         self.setupUi(self)
+        
+        # --- VERROUILLAGE DES DIMENSIONS ---
+        # On récupère la taille définie dans le .ui
+        ui_width = self.width()
+        ui_height = self.height()
+        
+        # On fixe les limites min et max à cette taille
+        # Cela empêche l'utilisateur de tirer sur les bords
+        self.setMinimumSize(QtCore.QSize(ui_width, ui_height))
+        self.setMaximumSize(QtCore.QSize(ui_width, ui_height))
+        
+        # Optionnel : On réactive les indices de redimensionnement 
+        # (Parfois nécessaire pour que les boîtes de message ne soient pas tronquées)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        
         self.iface = iface 
+
+        # --- CONFIGURATION SCROLLAREA ---
+        if hasattr(self, 'scrollArea'):
+            self.scrollArea.setWidgetResizable(False)
+            if hasattr(self, 'scrollAreaWidgetContents'):
+                self.scrollAreaWidgetContents.setMinimumSize(QtCore.QSize(590, 1750))
+
         self.layer = None
         self.features_dict = {}
-        
-        # --- CONFIGURATION DES DICTIONNAIRES ---
-        self.dict_rnx = {
-            "-- À renseigner --": "NULL",
-            "Aucun lien avec une RNX": "0",
-            "Inclus dans le périmètre RNX": "INCLUS",
-            "Adjacent à une RNX": "ADJ",
-            "Partiellement superposé": "SUPERP"
+        self.current_fid = None
+
+        # --- DICTIONNAIRES ---
+        # Contient les valeurs à renseigner dans la table, pour les listes déroulantes 
+        self.dict_rnx = {"-- À renseigner --": "NULL", "Le site ne correspond à aucune réserve": 0, "Le site correspond à une Réserve Naturelle Nationalle (RNN)": 1, "Le site correspond à une Réserve Naturelle Régionale (RNR)": 2, "Le site correspond exactement à une Réserve Naturelle Corse (RNC)": 3}
+        self.dict_militaire = {"-- À renseigner --": "NULL", "OUI": 1, "NON": 0}
+        self.dict_type_milieu = {"-- À renseigner --": "NULL", "Inconnu" : "0", "Toubière et Marais" : "1", "Pelouses sèches" : "2", "Landes, fruticées et prairies" : "3", "Écosystèmes alluviaux" : "4", "Gîtes à Chiroptères" : "5", "Écosystèmes littoraux et marins" : "6", "Écosystèmes aquatiques" : "7", "Écosystèmes forestiers" : "8", "Écosystèmes lacustres" : "9", "Milieux variés" : "10", "Milieux rupestres ou rocheux" : "11", "Milieux artificialisés (carrières, terrils, gravières ...)" : "12", "Sites géologiques" : "13", "Écosystèmes montagnards" : "14", "Autres" : "16"}
+        self.dict_nature = {"-- À renseigner --": "NULL", "Ne sais pas": "N", "Vrai": "V", "Faux": "F"}
+        self.dict_geol = {"-- À renseigner --": "NULL", "Ne sais pas": "N", "Vrai": "V", "Faux": "F"}
+        self.dict_carto = {"-- À renseigner --": "NULL", "Site non cartographié": 0, "Site partiellement cartographié": 1, "Site entièrement cartographié": 2}
+        self.dict_typo = {"-- À renseigner --": "NULL", "Inconnue": 0, "Corine biotopes": 1, "EUNIS": 2, "Prodromes des végétations de France (PVF)": 3, "Autre": 4}
+        self.dict_doc_pres = {"-- À renseigner --": "NULL", "OUI": 1, "NON": 0}
+        self.dict_doc_eval = {"-- À renseigner --": "NULL", "Pas d'évaluation": "Null", "Evaluation intermédiaire": "Evaluation intermédiaire", "Evaluation finale": "Evaluation finale"}
+        self.dict_oui_non = {"-- À renseigner --": "NULL", "OUI": 1, "NON": 0}
+
+        self.dict_geol_step = {
+            "-- À renseigner --": "", 
+            "Présence d'objets géologiques": {
+                "-- À renseigner --": "", 
+                "Présence de patrimoine géologique": 10,
+                "Patrimoine géologique identifié en se basant sur l'IRPG": {
+                    "-- À renseigner --": "",
+                    "Le site correspond exactement à un périmètre IRPG": {"-- À renseigner --": "", "Patrimoine géologique géré": 1111, "Patrimoine géologique non géré": 1112},
+                    "Le site est contenu entièrement au sein d'un périmètre IRPG": {"-- À renseigner --": "", "Patrimoine géologique géré": 1121, "Patrimoine géologique non géré": 1122},
+                    "Le site contient entièrement un périmètre IRPG": {"-- À renseigner --": "", "Patrimoine géologique géré": 1131, "Patrimoine géologique non géré": 1132},
+                    "Le site intersecte un périmètre IRPG": {"-- À renseigner --": "", "Patrimoine géologique géré": 1141, "Patrimoine géologique non géré": 1142} 
+                },
+                "Patrimoine géologique identifié à dire d'expert": {
+                    "-- À renseigner --": "", "Site à vocation géologique, géré pour cela": 121,
+                    "Site géré pour sa biodiversité mais qui présente également du patrimoine géolgique": {"-- À renseigner --": "", "Patrimoine géologique géré": 1221, "Patrimoine géologique non géré": 1222}
+                },
+            }, 
+            "Site à vocation purement biologique": {"-- À renseigner --": "", "Absence de site géologique en limite ou dans le voisinage": 21, "Présence d'un site géologique en limite ou dans le voisinage": 22}, 
+            "On ne sais pas si le site présente des objets géologiques...": {"-- À renseigner --": "", "Absence de site géologique en limite ou dans le voisinage": 31, "Présence d'un site géologique en limite ou dans le voisinage": 32},
+            "Objets géologiques ordinaires...": {"-- À renseigner --": "", "Absence de site géologique en limite ou dans le voisinage": 41, "Présence d'un site géologique en limite ou dans le voisinage": 42}
         }
-        self.dict_militaire = {"-- À renseigner --": "NULL", "Oui": "OUI", "Non": "NON"}
-        self.dict_type_milieu = {
-            "-- À renseigner --": "NULL", "Inconnu" : "0", "Toubière et Marais" : "1",
-            "Pelouses sèches" : "2", "Landes, fruticées et prairies" : "3",
-            "Écosystèmes alluviaux" : "4", "Gîtes à Chiroptères" : "5",
-            "Écosystèmes littoraux et marins" : "6", "Écosystèmes aquatiques" : "7",
-            "Écosystèmes forestiers" : "8", "Écosystèmes lacustres" : "9",
-            "Milieux variés" : "10", "Milieux rupestres ou rocheux" : "11",
-            "Milieux artificialisés (carrières, terrils, gravières ...)" : "12",
-            "Sites géologiques" : "13", "Écosystèmes montagnards" : "14", "Autres" : "16"
+
+        # Dictionnaire permettant la connexion entre les champs de la table SIG et les variables du script python
+        self.field_map = {
+            "site_lien_rnx": self.cbLienRNX, "site_rnx_surface_m2": self.spinRNX,
+            "terrain_militaire": self.cbMilitaire, "nbre_contrat_agri": self.spinContrats,
+            "nb_agri": self.spinAgri, "surf_contra_m2": self.spinSurfContrat,
+            "code_milieu_princ": self.cbType_milieu, "nature_site_inpn": self.cbNatureInpn,
+            "geol_site_inpn": self.cbGeolInpn, "carto_habitats": self.cbCartoHab,
+            "typo_carto_habitat": self.cbTypoHab, "gestionnaire_site": self.txtGestionnaire,
+            "surf_libre_evolution_m2": self.spinLibreEvo, "doc_gestion_presence": self.cbDocPres,
+            "doc_gestion_nom": self.txtDocNom, "doc_gestion_evaluation": self.cbDocEval,
+            "surf_doc_gestion_m2": self.spinSurfDoc, "url_fiche_inpn": self.txtUrlInpn,
+            "url_fiche_cen": self.txtUrlCen, "ouverture_public": self.cbOuverture,
+            "description_site": self.txtDescription, "url_site_photo": self.txtUrlPhoto,
+            "sensibilite": self.cbSensibilite, "non_diffusion": self.cbNonDiffusion,
+            "remq_sensibilite": self.txtRemqSensibilite, "code_geol": self.txtGeolResult,
+            "doc_gestion_date_ini": self.dateIni, "doc_gestion_date_maj": self.dateMaj, "doc_gestion_date_fin": self.dateFin
         }
-        self.dict_nature = {"-- À renseigner --": "NULL", "Naturel": "NAT", "Semi-naturel": "SEMI", "Artificiel": "ART"}
-        self.dict_geol = {"-- À renseigner --": "NULL", "Sédimentaire": "SED", "Magmatique": "MAG", "Métamorphique": "MET"}
-        self.dict_code_geol = {
-            "-- À renseigner --": "NULL", "Calcaires et marnes": "CALC", "Sables et grès": "SAB",
-            "Schistes et quartzites": "SCH", "Granites et gneiss": "GRA",
-            "Alluvions et dépôts récents": "ALLU", "Tourbe": "TOU"
-        }
-        self.dict_carto = {"-- À renseigner --": "NULL", "Réalisée": "OUI", "Non réalisée": "NON", "En cours": "EN_COURS"}
-        self.dict_typo = {"-- À renseigner --": "NULL", "EUNIS": "EUNIS", "Prodrome": "PROD", "Cahiers d'habitats": "CAH", "Corine Biotope": "CORINE"}
-        self.dict_doc_pres = {"-- À renseigner --": "NULL", "Oui": "OUI", "Non": "NON", "En projet": "PRJ"}
-        self.dict_doc_eval = {"-- À renseigner --": "NULL", "Favorable": "FAV", "Défavorable": "DEF", "En cours": "ENC"}
-        self.dict_oui_non = {"-- À renseigner --": "NULL", "Oui": "OUI", "Non": "NON"}
-        
-        # --- CONFIGURATION DES INFOBULLES (TOOLTIPS) ---
+
+        self.init_ui_elements()
+        self.setup_tooltips()
+        self.connect_signals()
+
+    def setup_tooltips(self):
+        """
+        Configuration des infobulles (utilisation de la méthode TOOLTIPS)
+        """
         self.label_rnx.setToolTip("Le site est-il inclus dans une réserve naturelle (nationale, régionale, corse) ?")
         self.label_num.setToolTip("Surface totale du site déclarée dans le cadre de la RNX (en m²).")
         self.label_militaire.setToolTip("Le site est-il un terrain militaire ? (entièrement ou en partie)")
-        self.label_contrats.setToolTip("Nombre de contrats agricole.")
-        self.label_agri.setToolTip("Nombre d’agriculteurs sous contrat (écrit ou oral) sur le site.")
-        self.label_surf_contrat.setToolTip("Superficie (en m²) du site sous contrat (écrit ou oral) avec un ou N agriculteurs.")
+        self.label_contrats.setToolTip("Nombre de contrats agricole (0 est une réponse possible).")
+        self.label_agri.setToolTip("Nombre d’agriculteurs sous contrat (écrit ou oral) sur le site (0 est une réponse possible).")
+        self.label_surf_contrat.setToolTip("Superficie (en m²) du site sous contrat (écrit ou oral) avec un ou N agriculteurs (0 est une réponse possible).")
         self.label_type_milieu.setToolTip("Milieu naturel prédominant sur le site.")
-        self.label_nature.setToolTip("Le site est classé pour protéger des éléments du patrimoine naturel ?")
-        self.label_geol.setToolTip("Le site est classé pour protéger des éléments du patrimoine géologique ?")
-        self.label_code_geol.setToolTip("L'intérêt géologique du site.")
+        self.label_nature.setToolTip("Le site est-il classé pour protéger des éléments du patrimoine naturel ?")
+        self.label_geol.setToolTip("Le site est-il classé pour protéger des éléments du patrimoine géologique ?")
+        self.groupGeolDecision.setToolTip("Quel est l'intérêt géologique du sites ? Utilisez les listes pour générer le code géologique du site.")
         self.label_carto_hab.setToolTip("Existe-t-il une cartographie d'habitats naturels sur le site ?")
         self.label_typo_hab.setToolTip("Typologie utilisée pour la cartographie d'habitats ou de végétation.")
         self.label_gestionnaire.setToolTip("Organisme localement responsable de la gestion de l'espace naturel protégé.")
@@ -73,253 +128,336 @@ class AttributeEditorSitesCENDialog(QtWidgets.QDialog, FORM_CLASS):
         self.label_desc.setToolTip("Résumé des enjeux et caractéristiques principales du site.")
         self.label_url_photo.setToolTip("Lien vers une photographie représentative du paysage.")
         self.label_sensi.setToolTip("Le site est-il sensible à la diffusion ?")
-        self.label_diffusion.setToolTip("Si 'Oui', les données précises ne seront pas diffusées publiquement.")
+        self.label_diffusion.setToolTip("Si il est sensible a la diffusion, est-ce pour des raisons de partenariat ?")
         self.label_remq_sensi.setToolTip("Précisions sur les raisons de la sensibilité ou de la non-diffusion.")
 
-        # Remplissage des ComboBox
-        self.combos_map = {
-            self.cbLienRNX: self.dict_rnx, self.cbMilitaire: self.dict_militaire,
-            self.cbType_milieu: self.dict_type_milieu, self.cbNatureInpn: self.dict_nature,
-            self.cbGeolInpn: self.dict_geol, self.cbCodeGeol: self.dict_code_geol,
-            self.cbCartoHab: self.dict_carto, self.cbTypoHab: self.dict_typo,
-            self.cbDocPres: self.dict_doc_pres, self.cbDocEval: self.dict_doc_eval,
-            self.cbOuverture: self.dict_oui_non, self.cbSensibilite: self.dict_oui_non,
-            self.cbNonDiffusion: self.dict_oui_non
-        }
-        for cb, d in self.combos_map.items():
-            cb.clear()
-            cb.addItems(d.keys())
-
-        # --- CONNEXIONS ---
-        self.txtSearch.textChanged.connect(self.filter_list)
-        self.listSites.itemSelectionChanged.connect(self.on_selection_changed)
-        self.btnApply.clicked.connect(self.save_current_feature)
-
-        # Liste des widgets pour la surveillance (Auto-Highlight)
-        self.widgets_to_watch = [
-            self.cbLienRNX, self.cbMilitaire, self.cbDocPres, self.cbSensibilite,
-            self.spinRNX, self.spinContrats, self.spinAgri, self.spinSurfContrat, 
-            self.cbType_milieu, self.cbNatureInpn, self.cbGeolInpn, self.cbCodeGeol, 
-            self.cbCartoHab, self.cbTypoHab, self.txtGestionnaire, 
-            self.spinLibreEvo, self.txtDocNom, self.cbDocEval, self.spinSurfDoc,
-            self.txtUrlInpn, self.txtUrlCen, self.cbOuverture, self.txtUrlPhoto, self.cbNonDiffusion,
-            self.dateIni, self.dateMaj, self.dateFin # Réintégration des dates
-        ]
-        
-        for w in self.widgets_to_watch:
-            if isinstance(w, QtWidgets.QComboBox):
-                w.currentIndexChanged.connect(self.check_field_validity)
-            elif isinstance(w, (QtWidgets.QSpinBox, QtWidgets.QDoubleSpinBox)):
-                w.valueChanged.connect(self.check_field_validity)
-            elif isinstance(w, QtWidgets.QLineEdit):
-                w.textChanged.connect(self.check_field_validity)
-            elif isinstance(w, QtWidgets.QDateEdit):
-                w.dateChanged.connect(self.check_field_validity)
-
-        self.txtDescription.textChanged.connect(self.check_field_validity)
-        self.txtRemqSensibilite.textChanged.connect(self.check_field_validity)
-
     def apply_highlight(self, widget, is_invalid):
+        """
+        Applique le style rouge si le champ est vide ou considéré comme étant invalide. Utilisation de la méthode STYLESHEET.
+        """
         if is_invalid:
             widget.setStyleSheet("background-color: #ffe6e6; border: 1px solid #ff4d4d; border-radius: 3px;")
         else:
             widget.setStyleSheet("")
 
     def check_field_validity(self):
-        """Vérifie la validité des champs et applique le style rouge"""
-        self.apply_highlight(self.cbLienRNX, self.cbLienRNX.currentText() == "-- À renseigner --")
-        self.apply_highlight(self.spinRNX, self.spinRNX.value() == -1)
-        self.apply_highlight(self.cbMilitaire, self.cbMilitaire.currentText() == "-- À renseigner --")
-        self.apply_highlight(self.spinContrats, self.spinContrats.value() == -1)
-        self.apply_highlight(self.spinAgri, self.spinAgri.value() == -1)
-        self.apply_highlight(self.spinSurfContrat, self.spinSurfContrat.value() == -1)
-        self.apply_highlight(self.cbType_milieu, self.cbType_milieu.currentText() == "-- À renseigner --")
-        self.apply_highlight(self.cbNatureInpn, self.cbNatureInpn.currentText() == "-- À renseigner --")
-        self.apply_highlight(self.cbGeolInpn, self.cbGeolInpn.currentText() == "-- À renseigner --")
-        self.apply_highlight(self.cbCodeGeol, self.cbCodeGeol.currentText() == "-- À renseigner --")
-        self.apply_highlight(self.cbCartoHab, self.cbCartoHab.currentText() == "-- À renseigner --")
-        self.apply_highlight(self.cbTypoHab, self.cbTypoHab.currentText() == "-- À renseigner --")
-        self.apply_highlight(self.spinLibreEvo, self.spinLibreEvo.value() == -1)
-        self.apply_highlight(self.txtGestionnaire, self.txtGestionnaire.text().strip() == "")
-        self.apply_highlight(self.txtDocNom, self.txtDocNom.text().strip() == "")
-        self.apply_highlight(self.cbDocEval, self.cbDocEval.currentText() == "-- À renseigner --")
-        self.apply_highlight(self.cbDocPres, self.cbDocPres.currentText() == "-- À renseigner --")
-        self.apply_highlight(self.spinSurfDoc, self.spinSurfDoc.value() == -1)
-        self.apply_highlight(self.cbSensibilite, self.cbSensibilite.currentText() == "-- À renseigner --")
-        self.apply_highlight(self.txtUrlInpn, self.txtUrlInpn.text().strip() == "")
-        self.apply_highlight(self.txtUrlCen, self.txtUrlCen.text().strip() == "")
-        self.apply_highlight(self.cbOuverture, self.cbOuverture.currentText() == "-- À renseigner --")
+        """
+        Vérifie tous les champs, pour permettre la mise en surbrillance.
+        """
+        # ComboBoxes standards (listes de valeurs)
+        combos = [self.cbLienRNX, self.cbMilitaire, self.cbType_milieu, self.cbNatureInpn, 
+                self.cbGeolInpn, self.cbCartoHab, self.cbTypoHab, self.cbDocPres, 
+                self.cbDocEval, self.cbOuverture, self.cbSensibilite, self.cbNonDiffusion]
+        
+        # ComboBoxes de la cascade géologique
+        geol_combos = [self.cbGeolStep1, self.cbGeolStep2, self.cbGeolStep3, self.cbGeolStep4]
+        
+        for cb in (combos + geol_combos):
+            # On vérifie si l'élément est visible (pour éviter de colorer des listes vides cachées)
+            # et si le texte est celui par défaut
+            is_invalid = cb.currentText() == "-- À renseigner --" or cb.currentText() == ""
+            self.apply_highlight(cb, is_invalid)
+        
+        # SpinBoxes (Listes numériques)
+        spins = [self.spinRNX, self.spinContrats, self.spinAgri, self.spinSurfContrat, 
+                self.spinLibreEvo, self.spinSurfDoc]
+        for s in spins:
+            self.apply_highlight(s, s.value() <= -1)
+
+        # LineEdits (Edition de texte (Une seule ligne))
+        lines = [self.txtGestionnaire, self.txtDocNom, self.txtUrlInpn, self.txtUrlCen, self.txtUrlPhoto]
+        for l in lines:
+            self.apply_highlight(l, l.text().strip() == "")
+
+        # TextEdits (Edition de texte (Multi-lignes))
         self.apply_highlight(self.txtDescription, self.txtDescription.toPlainText().strip() == "")
-        self.apply_highlight(self.txtUrlPhoto, self.txtUrlPhoto.text().strip() == "")
-        self.apply_highlight(self.cbNonDiffusion, self.cbNonDiffusion.currentText() == "-- À renseigner --")
         self.apply_highlight(self.txtRemqSensibilite, self.txtRemqSensibilite.toPlainText().strip() == "")
 
-    def on_selection_changed(self):
-        items = self.listSites.selectedItems()
-        if not items: return
-        
-        self.scrollArea.verticalScrollBar().setValue(0)
-        fid = items[0].data(QtCore.Qt.UserRole)
-        feat = self.features_dict.get(fid)
-        
-        if feat:
-            self.blockSignals(True)
-            
-            def get_key(dico, val): 
-                return next((k for k, v in dico.items() if v == str(val)), "-- À renseigner --")
-
-            # ComboBoxes
-            self.cbLienRNX.setCurrentText(get_key(self.dict_rnx, feat['site_lien_rnx']))
-            self.cbMilitaire.setCurrentText(get_key(self.dict_militaire, feat['terrain_militaire']))
-            self.cbType_milieu.setCurrentText(get_key(self.dict_type_milieu, feat['code_milieu_princ']))
-            self.cbNatureInpn.setCurrentText(get_key(self.dict_nature, feat['nature_site_inpn']))
-            self.cbGeolInpn.setCurrentText(get_key(self.dict_geol, feat['geol_site_inpn']))
-            self.cbCodeGeol.setCurrentText(get_key(self.dict_code_geol, feat['code_geol']))
-            self.cbCartoHab.setCurrentText(get_key(self.dict_carto, feat['carto_habitats']))
-            self.cbTypoHab.setCurrentText(get_key(self.dict_typo, feat['typo_carto_habitat']))
-            self.cbDocPres.setCurrentText(get_key(self.dict_doc_pres, feat['doc_gestion_presence']))
-            self.cbDocEval.setCurrentText(get_key(self.dict_doc_eval, feat['doc_gestion_evaluation']))
-            self.cbOuverture.setCurrentText(get_key(self.dict_oui_non, feat['ouverture_public']))
-            self.cbSensibilite.setCurrentText(get_key(self.dict_oui_non, feat['sensibilite']))
-            self.cbNonDiffusion.setCurrentText(get_key(self.dict_oui_non, feat['non_diffusion']))
-
-            # Textes
-            self.txtGestionnaire.setText(str(feat['gestionnaire_site']) if feat['gestionnaire_site'] else "")
-            self.txtDocNom.setText(str(feat['doc_gestion_nom']) if feat['doc_gestion_nom'] else "")
-            self.txtUrlInpn.setText(str(feat['url_fiche_inpn']) if feat['url_fiche_inpn'] else "")
-            self.txtUrlCen.setText(str(feat['url_fiche_cen']) if feat['url_fiche_cen'] else "")
-            self.txtUrlPhoto.setText(str(feat['url_site_photo']) if feat['url_site_photo'] else "")
-            self.txtDescription.setPlainText(str(feat['description_site']) if feat['description_site'] else "")
-            self.txtRemqSensibilite.setPlainText(str(feat['remq_sensibilite']) if feat['remq_sensibilite'] else "")
-
-            # SpinBoxes
-            def set_spin(w, val):
-                if val is None or str(val).upper() == 'NULL' or str(val) == '': w.setValue(-1)
-                else:
-                    try: w.setValue(int(float(str(val))))
-                    except: w.setValue(-1)
-
-            set_spin(self.spinRNX, feat['site_rnx_surface_m2'])
-            set_spin(self.spinContrats, feat['nbre_contrat_agri'])
-            set_spin(self.spinAgri, feat['nb_agri'])
-            set_spin(self.spinSurfContrat, feat['surf_contra_m2'])
-            set_spin(self.spinLibreEvo, feat['surf_libre_evolution_m2'])
-            set_spin(self.spinSurfDoc, feat['surf_doc_gestion_m2'])
-
-            # RÉINSERTION DES DATES
-            for field, widget in [('doc_gestion_date_ini', self.dateIni), 
-                                  ('doc_gestion_date_maj', self.dateMaj), 
-                                  ('doc_gestion_date_fin', self.dateFin)]:
-                val = feat[field]
-                widget.setDate(val if val and hasattr(val, 'isValid') and val.isValid() else QtCore.QDate.currentDate())
-
-            self.blockSignals(False)
-            self.check_field_validity()
-            self.zoom_to_feature(feat)
-
     def save_current_feature(self):
+        """
+        Permet de récupérer les valeur saisies dans le formulaire, puis de les retranscrires au sein de la couche SIG
+        """
+        # Option de sécurité, permet de vérifier si un élément a bien été saisie dans l'éléménet 'listSites' et de vérifier si la couche SIG a bien été chargée
         items = self.listSites.selectedItems()
-        if not items or not self.layer: return
-        fid = items[0].data(QtCore.Qt.UserRole)
+        if not items or not self.layer: return False
+        
+        # Permet la récupération du FID (l'identifiant unique) du polygone dans la couche SIG des sites
+        item = items[0]
+        fid = item.data(QtCore.Qt.UserRole)
+        data_to_save = {}
+        all_dicos = [self.dict_rnx, self.dict_militaire, self.dict_type_milieu, self.dict_nature, self.dict_geol, self.dict_carto, self.dict_typo, self.dict_doc_pres, self.dict_doc_eval, self.dict_oui_non]
 
-        def val_or_null(spin_val):
-            return None if spin_val == -1 else spin_val
+        # Option permettant de parcourir tous les champs du formulaire
+        for field, widget in self.field_map.items():
+            if isinstance(widget, QtWidgets.QComboBox):
+                val = "NULL"
+                for dico in all_dicos:
+                    if widget.currentText() in dico:
+                        val = dico[widget.currentText()]; break
+                data_to_save[field] = NULL if val == "NULL" else val
+            elif isinstance(widget, (QtWidgets.QSpinBox, QtWidgets.QDoubleSpinBox)):
+                data_to_save[field] = NULL if widget.value() <= -1 else widget.value()
+            elif isinstance(widget, QtWidgets.QDateEdit):
+                data_to_save[field] = widget.date()
+            else:
+                txt = widget.toPlainText() if hasattr(widget, 'toPlainText') else widget.text()
+                data_to_save[field] = txt.strip() if txt.strip() else NULL
 
-        data = {
-            'site_lien_rnx': self.dict_rnx[self.cbLienRNX.currentText()],
-            'site_rnx_surface_m2': val_or_null(self.spinRNX.value()),
-            'terrain_militaire': self.dict_militaire[self.cbMilitaire.currentText()],
-            'nbre_contrat_agri': val_or_null(self.spinContrats.value()),
-            'nb_agri': val_or_null(self.spinAgri.value()),
-            'surf_contra_m2': val_or_null(self.spinSurfContrat.value()),
-            'code_milieu_princ': self.dict_type_milieu[self.cbType_milieu.currentText()],
-            'nature_site_inpn': self.dict_nature[self.cbNatureInpn.currentText()],
-            'geol_site_inpn': self.dict_geol[self.cbGeolInpn.currentText()],
-            'code_geol': self.dict_code_geol[self.cbCodeGeol.currentText()],
-            'carto_habitats': self.dict_carto[self.cbCartoHab.currentText()],
-            'typo_carto_habitat': self.dict_typo[self.cbTypoHab.currentText()],
-            'gestionnaire_site': self.txtGestionnaire.text(),
-            'surf_libre_evolution_m2': val_or_null(self.spinLibreEvo.value()),
-            'doc_gestion_presence': self.dict_doc_pres[self.cbDocPres.currentText()],
-            'doc_gestion_nom': self.txtDocNom.text(),
-            'doc_gestion_evaluation': self.dict_doc_eval[self.cbDocEval.currentText()],
-            'doc_gestion_date_ini': self.dateIni.date(), # Date réinsérée
-            'doc_gestion_date_maj': self.dateMaj.date(), # Date réinsérée
-            'doc_gestion_date_fin': self.dateFin.date(), # Date réinsérée
-            'surf_doc_gestion_m2': val_or_null(self.spinSurfDoc.value()),
-            'url_fiche_inpn': self.txtUrlInpn.text(),
-            'url_fiche_cen': self.txtUrlCen.text(),
-            'url_site_photo': self.txtUrlPhoto.text(),
-            'description_site': self.txtDescription.toPlainText(),
-            'remq_sensibilite': self.txtRemqSensibilite.toPlainText(),
-            'ouverture_public': self.dict_oui_non[self.cbOuverture.currentText()],
-            'sensibilite': self.dict_oui_non[self.cbSensibilite.currentText()],
-            'non_diffusion': self.dict_oui_non[self.cbNonDiffusion.currentText()]
-        }
-
+        # Passage de la couche SIG en mode édition, récupère l'index de l'entité dans la table attributaire et modifie la valeur pour l'objet (fid) concerné
         self.layer.startEditing()
-        for field, val in data.items():
+        for field, val in data_to_save.items():
             idx = self.layer.fields().indexFromName(field)
-            if idx != -1: 
-                self.layer.changeAttributeValue(fid, idx, val if val != "NULL" else None)
+            if idx != -1:
+                self.layer.changeAttributeValue(fid, idx, val)
 
+        # Si la modification a été effectué, la boucle va enregistrer physiquement les modifications 
         if self.layer.commitChanges():
-            for f, v in data.items(): 
+            # Permet d'enregistre le 'cache' sans devoir relire toute la couche SIG entière
+            for f, v in data_to_save.items():
                 self.features_dict[fid][f] = v
-            self.set_item_style(items[0], self.is_feature_incomplete(self.features_dict[fid]))
+            
+            #Application de nos fonctions de  et de
+            self.set_item_style(item, self.is_feature_incomplete(self.features_dict[fid]))
             self.refresh_stats()
-            QtWidgets.QMessageBox.information(self, "Succès", "Données sauvegardées.")
+
+            if self.iface:
+                self.iface.messageBar().pushMessage("Succès", "Données sauvegardées", level=0)
+            else:
+                QtWidgets.QMessageBox.information(self, "Succès", "Données sauvegardées.")
+            return True
         else:
+            # Permet de de tout annuler si l'écriture, on revient à l'état initial pour ne pas laisser de données corrompues en mémoire
             self.layer.rollBack()
             QtWidgets.QMessageBox.warning(self, "Erreur", "La sauvegarde a échoué.")
+            return False
 
     def is_feature_incomplete(self, feat):
-        return (str(feat['terrain_militaire']) in ["NULL", "None"] or 
-                feat['site_rnx_surface_m2'] in [None, -1] or 
-                not feat['gestionnaire_site'] or
-                not feat['description_site'])
+        """
+        Permet de définir quels sont les champs obligatoires à renseigner pour pouvoir valider le formulaire 
+        """
+        # Permet de repérer et définir ce qu'est un dossier vide dans notre couche SIG 
+        def is_empty(v): 
+            return v is None or v == NULL or str(v) == 'NULL' or str(v).strip() == ""
+        # Champs obligatoires à saisir pour valider le formulaire de saisie 
+        return (is_empty(feat['terrain_militaire']) or 
+                feat['site_rnx_surface_m2'] in [None, NULL, -1] or 
+                is_empty(feat['gestionnaire_site']) or 
+                is_empty(feat['description_site']))
+        
+    def refresh_stats(self):
+        """
+        Permet de décompter le nombre de sites à compléter sur le nombre total de sites
+        """
+        total = self.listSites.count()
+        inc = sum(1 for i in range(total) 
+                if self.is_feature_incomplete(self.features_dict[self.listSites.item(i).data(QtCore.Qt.UserRole)]))
+        self.setWindowTitle(f"Gestionnaire CEN - {inc} à compléter sur {total}")
 
-    def set_item_style(self, item, inc):
+    def set_item_style(self, item, incomplete):
+        """
+        Permet de passer les champs incomplet en rouge et en gras
+        """
         font = item.font()
-        item.setForeground(QtGui.QColor('red' if inc else 'black'))
-        font.setBold(inc)
+        item.setForeground(QtGui.QColor('red' if incomplete else 'black'))
+        font.setBold(incomplete)
         item.setFont(font)
 
+    def on_selection_changed(self):
+        """
+        Permet d'associer les descriptions des différents champs en fonction de la valeur contenue dans les dictionnaires de données
+        """
+        # Identification du site sélectionné, récupération de l'élément cliqué dans la liste 
+        items = self.listSites.selectedItems()
+        if not items: return
+        self.current_fid = items[0].data(QtCore.Qt.UserRole)
+        feat = self.features_dict[self.current_fid]
+        
+        # Blocage du signal entre le formulaire et la table attributaire de la couche SIG
+        # (permet d'éviter au formulaire de devoir refaire des calculs si l'on possède des formules effectuant des calculs automatiques)
+        self.blockSignals(True)
+        all_dicos = [self.dict_rnx, self.dict_militaire, self.dict_type_milieu, self.dict_nature, self.dict_geol, self.dict_carto, self.dict_typo, self.dict_doc_pres, self.dict_doc_eval, self.dict_oui_non]
+        
+        # Cherche dans tous les dictionnaires de données (que l'on a mis en place au début) les clés associées aux valeurs correspondants aux valeurs brutes des tables SIG (jointure attributaire en quelque sorte)
+        for field, widget in self.field_map.items():
+            val = feat[field]
+            if isinstance(widget, QtWidgets.QComboBox):
+                found = False
+                for dico in all_dicos:
+                    for k, v in dico.items():
+                        if str(v) == str(val): widget.setCurrentText(k); found = True; break
+                    if found: break
+                if not found: widget.setCurrentText("-- À renseigner --")
+            elif isinstance(widget, (QtWidgets.QSpinBox, QtWidgets.QDoubleSpinBox)):
+                widget.setValue(int(val) if val is not None and str(val) != 'NULL' else -1)
+            elif isinstance(widget, QtWidgets.QDateEdit):
+                widget.setDate(val if val and hasattr(val, 'isValid') and val.isValid() else QtCore.QDate.currentDate())
+            elif isinstance(widget, QtWidgets.QLineEdit): widget.setText(str(val) if val and str(val) != 'None' else "")
+            elif isinstance(widget, QtWidgets.QTextEdit): widget.setPlainText(str(val) if val and str(val) != 'None' else "")
+        
+        # Déblocage du signal entre le formulaire et la table, relance de la fonction de vérification pour la validation des champs
+        self.blockSignals(False)
+        self.check_field_validity()
+        if hasattr(self, 'scrollArea'): self.scrollArea.setFocus()
+
+    def connect_signals(self):
+        """
+        Permet la connexion entre nos widgets et nos fonctions 
+        """
+        # Mise en place des connexions principales (Naviguation et Boutons)
+        self.txtSearch.textChanged.connect(self.filter_list)
+        self.listSites.itemSelectionChanged.connect(self.on_selection_changed)
+        self.btnApply.clicked.connect(self.save_current_feature)
+        self.button_box.accepted.connect(self.save_and_close)
+        self.button_box.rejected.connect(self.reject)
+        
+        # Mise en place de la surveillance automatique (Validation en temps réel)
+        for widget in self.field_map.values():
+            if isinstance(widget, QtWidgets.QComboBox): widget.currentIndexChanged.connect(self.check_field_validity)
+            elif isinstance(widget, (QtWidgets.QSpinBox, QtWidgets.QDoubleSpinBox)): widget.valueChanged.connect(self.check_field_validity)
+            elif isinstance(widget, QtWidgets.QLineEdit): widget.textChanged.connect(self.check_field_validity)
+            elif isinstance(widget, (QtWidgets.QTextEdit, QtWidgets.QPlainTextEdit)): widget.textChanged.connect(self.check_field_validity)
+
+        # Mise en place des listes en cascades (Le système Géologique)
+        self.cbGeolStep1.currentIndexChanged.connect(lambda: self.update_geol_cascade(1))
+        self.cbGeolStep2.currentIndexChanged.connect(lambda: self.update_geol_cascade(2))
+        self.cbGeolStep3.currentIndexChanged.connect(lambda: self.update_geol_cascade(3))
+        self.cbGeolStep4.currentIndexChanged.connect(self.update_final_geol_code)
+
     def populate_list(self, layer):
+        """ 
+        Passerelle entre QGIS et l'interface
+        """
         self.layer = layer
         self.listSites.clear()
         self.features_dict.clear()
         if not self.layer: return
-        total, inc = 0, 0
+        
+        # Scannage de la couche SIG 
         for feat in self.layer.getFeatures():
-            total += 1
             fid = feat.id()
             self.features_dict[fid] = feat
+            
+            # Création de notre interface visuelle
             nom = str(feat['NOM_SITE']) if feat['NOM_SITE'] else f"ID {fid}"
             item = QtWidgets.QListWidgetItem(nom)
             item.setData(QtCore.Qt.UserRole, fid)
-            status = self.is_feature_incomplete(feat)
-            if status: inc += 1
-            self.set_item_style(item, status)
+            
+            # Mise en forme et statistiques 
+            self.set_item_style(item, self.is_feature_incomplete(feat))
             self.listSites.addItem(item)
-        self.update_title(inc, total)
+        self.refresh_stats()
 
-    def zoom_to_feature(self, feat):
-        if self.iface and feat.geometry():
-            self.iface.mapCanvas().setExtent(feat.geometry().boundingBox())
-            self.iface.mapCanvas().scaleBy(1.2)
-            self.iface.mapCanvas().refresh()
+    def save_and_close(self):
+        """
+        Fonction permettant de sauvegarder et de quitter le plugin (connecté à un boutton)
+        """
+        if self.save_current_feature():
+            self.accept()
+
+    def init_ui_elements(self):
+        """
+        Permet de remplir de remplir les widgets au moment de l'ouverture du plugin
+        """
+        # Configuration des dictionnaires temporaires, permettant d'associer le widget au dictionnaire de donnée
+        config = {self.cbLienRNX: self.dict_rnx, self.cbMilitaire: self.dict_militaire, self.cbType_milieu: self.dict_type_milieu, self.cbCartoHab: self.dict_carto, self.cbTypoHab: self.dict_typo, self.cbDocPres: self.dict_doc_pres, self.cbOuverture: self.dict_oui_non, self.cbSensibilite: self.dict_oui_non, self.cbNonDiffusion: self.dict_oui_non, self.cbNatureInpn: self.dict_nature, self.cbGeolInpn: self.dict_geol, self.cbDocEval: self.dict_doc_eval}
+        
+        # Boucle de remplissage automatique des valeurs dans les dictionnaires 
+        for cb, d in config.items():
+            cb.clear(); cb.addItems(d.keys())
+        
+        # Cas à part de la Géologie, permet de seulement remplir la 1ere colonne     
+        self.cbGeolStep1.clear(); 
+        self.cbGeolStep1.addItems(self.dict_geol_step.keys())
+
+    def update_geol_cascade(self, step):
+        """
+        Permet la mise à jours de nos menus, pour la partie géologique de notre formulaire 
+        """
+        # Blocage du signal entre le formulaire et la table attributaire de la couche SIG
+        self.blockSignals(True)
+        t1, t2, t3 = self.cbGeolStep1.currentText(), self.cbGeolStep2.currentText(), self.cbGeolStep3.currentText()
+        
+        # Vérifier si c'est bien la première ligne qui a été sélectionné 
+        if step == 1:
+            # Reset des valeurs des autres listes si il y a eu des saisies 
+            self.cbGeolStep2.clear(); self.cbGeolStep3.clear(); self.cbGeolStep4.clear()
+            # Recherche de la branche correspondante 
+            node = self.dict_geol_step.get(t1)
+            # Si c'est un dictionnaire, alors on récupère toutes les clés liées au dictionnaire suivant, pour les réinjecter dans l'étape suivante 
+            if isinstance(node, dict): self.cbGeolStep2.addItems(node.keys())
+            
+        # Vérifier si c'est bien la seconde ligne qui a été sélectionné             
+        elif step == 2:
+            # Reset des valeurs des autres listes si il y a eu des saisies 
+            self.cbGeolStep3.clear(); self.cbGeolStep4.clear()
+            # Recherche de la branche correspondante 
+            node1 = self.dict_geol_step.get(t1, {})
+            # Si c'est un dictionnaire, alors on récupère toutes les clés liées au dictionnaire suivant, pour les réinjecter dans l'étape suivante ...
+            if isinstance(node1, dict):
+                node2 = node1.get(t2)
+                if isinstance(node2, dict): self.cbGeolStep3.addItems(node2.keys())
+
+        # Vérifier si c'est bien la troisième ligne qui a été sélectionné                         
+        elif step == 3:
+            # Reset des valeurs des autres listes si il y a eu des saisies 
+            self.cbGeolStep4.clear()
+            # Recherche de la branche correspondante 
+            node1 = self.dict_geol_step.get(t1, {})
+            # Si c'est un dictionnaire, alors on récupère toutes les clés liées au dictionnaire suivant, pour les réinjecter dans l'étape suivante ...            
+            if isinstance(node1, dict):
+                node2 = node1.get(t2, {})
+                if isinstance(node2, dict):
+                    node3 = node2.get(t3)
+                    if isinstance(node3, dict): self.cbGeolStep4.addItems(node3.keys())
+                    
+        # Relancement du signal entre le formulaire et la table attributaire + application de la fonction 'update_final_geol_code' pour les valeurs 
+        self.blockSignals(False)
+        self.update_final_geol_code()
+
+    def update_final_geol_code(self):
+        """
+        Permet de parcourir notre arbre et de récupérer les valeurs au bout de chaque branche de notre dictionnaire, puis de faire la concaténation de tous les valeurs récupérées 
+        """
+        val = self.dict_geol_step
+        # Boucle permettant de chekquer nos 4 listes géologiques l'une après l'autre dans l'ordre
+        for cb in [self.cbGeolStep1, self.cbGeolStep2, self.cbGeolStep3, self.cbGeolStep4]:
+            # Récupération du texte sélectionné par l'utilisateur pour la liste en cours
+            txt = cb.currentText()
+            # Arrête la boucle si : la liste est vide, c'est une valeur finale ou le texte choisit n'est pas dans le dictionnaire
+            if not txt or not isinstance(val, dict) or txt not in val: break
+            # La variable val définit au début de notre fonction, elle va se réduire en fonction de la sous-partie du dictionnaire correpondant au choix de l'utilisateur 
+            val = val[txt]
+            # Détection du résultat final, si val n'est plus un dictionnaire, on arrête tout et on affiche le résultat final 
+            if not isinstance(val, dict): 
+                self.txtGeolResult.setText(str(val))
+                return
+        # Si la boucle s'est arrêté prématurément (à cause du break) sans arriver au bout, alors on efface le code final car incomplet 
+        self.txtGeolResult.clear()
 
     def filter_list(self):
-        text = self.txtSearch.text().lower()
+        """
+        Fonction filtre, permettant de retrouver plus rapidement un site grâce à la barre de recherche 
+        """
+        # Récupération de la saisie de l'utilisateur et le convertit en minuscule pour éviter la casse au moment de la saisie
+        txt = self.txtSearch.text().lower()
+        # Boucle permettant de parcourir l'intégralité de nos sites, et de masquer tous les noms de sites dont la saisie diffère du contenu 
         for i in range(self.listSites.count()):
             item = self.listSites.item(i)
-            item.setHidden(text not in item.text().lower())
+            item.setHidden(txt not in item.text().lower())
 
-    def refresh_stats(self):
-        total = self.listSites.count()
-        inc = sum(1 for i in range(total) if self.is_feature_incomplete(self.features_dict[self.listSites.item(i).data(QtCore.Qt.UserRole)]))
-        self.update_title(inc, total)
-
-    def update_title(self, inc, total):
-        self.setWindowTitle(f"Gestionnaire CEN - {inc} à compléter sur {total}")
+    def eventFilter(self, obj, event):
+        """
+        Fonction permettant la maîtrise de la molette. Permet de régler le conflit entre les listes déroulantes et la barre de défilement
+        """
+        # Vérifié si l'utilisateur fait tourner sa molette 
+        if event.type() == QtCore.QEvent.Wheel:
+            # Si la souris survole un widget mais que l'utilisateur n'a pas cliqué dessus, on ignore l'action sur le widget
+            if not obj.hasFocus(): return False 
+            #Récupération du scrolling de l'utilisateur pour l'appliquer à la barre de défilement 
+            if hasattr(self, 'scrollArea'):
+                delta = event.angleDelta().y()
+                sb = self.scrollArea.verticalScrollBar()
+                sb.setValue(sb.value() - delta)
+                return True
+        # Permet de dire à l'applicatif d'avoir un comportement standard comme une fenêtre Windows/Linux classique 
+        return super(AttributeEditorSitesCENDialog, self).eventFilter(obj, event)
