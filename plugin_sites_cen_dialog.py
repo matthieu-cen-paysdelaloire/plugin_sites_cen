@@ -14,26 +14,20 @@ class AttributeEditorSitesCENDialog(QtWidgets.QDialog, FORM_CLASS):
         super(AttributeEditorSitesCENDialog, self).__init__(parent)
         self.setupUi(self)
         
-        # --- VERROUILLAGE DES DIMENSIONS ---
-        # On récupère la taille définie dans le .ui
-        ui_width = self.width()
-        ui_height = self.height()
-        
-        # On fixe les limites min et max à cette taille
-        # Cela empêche l'utilisateur de tirer sur les bords
-        self.setMinimumSize(QtCore.QSize(ui_width, ui_height))
-        self.setMaximumSize(QtCore.QSize(ui_width, ui_height))
-        
-        # Optionnel : On réactive les indices de redimensionnement 
-        # (Parfois nécessaire pour que les boîtes de message ne soient pas tronquées)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        # --- DIMENSIONS LIBÉRÉES ---
+        # On définit une taille minimale raisonnable pour ne pas écraser l'interface
+        self.setMinimumSize(QtCore.QSize(800, 600))
+        # On supprime le setMaximumSize pour permettre le plein écran
+        self.setMaximumSize(QtCore.QSize(16777215, 16777215)) 
         
         self.iface = iface 
 
-        # --- CONFIGURATION SCROLLAREA ---
+        # --- CONFIGURATION SCROLLAREA (CORRIGÉE) ---
         if hasattr(self, 'scrollArea'):
-            self.scrollArea.setWidgetResizable(False)
+            # IMPORTANT : True permet au contenu de s'étirer avec la fenêtre
+            self.scrollArea.setWidgetResizable(True) 
             if hasattr(self, 'scrollAreaWidgetContents'):
+                # On garde seulement une largeur minimale pour la lisibilité
                 self.scrollAreaWidgetContents.setMinimumSize(QtCore.QSize(590, 1750))
 
         self.layer = None

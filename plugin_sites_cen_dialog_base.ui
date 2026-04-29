@@ -1,405 +1,641 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>AttributeEditorSitesCENDialogBase</class>
- <widget class="QDialog" name="AttributeEditorSitesCENDialogBase">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>900</width>
-    <height>600</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>Gestionnaire des sites CEN</string>
-  </property>
-  <property name="styleSheet">
-   <string>
-    /* 1. TITRES : Labels et GroupBox */
-    QLabel, QGroupBox {
-        font-weight: bold;
-        color: #2c3e50;
-    }
+  <class>AttributeEditorSitesCENDialogBase</class>
+  
+  <widget class="QDialog" name="AttributeEditorSitesCENDialogBase">
+    <property name="geometry">
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>950</width>
+        <height>750</height>
+      </rect>
+    </property>
+    
+    <property name="windowTitle">
+      <string>Gestionnaire des sites CEN</string>
+    </property>
+    
+    <property name="styleSheet">
+      <string>
+        QLabel, QGroupBox { font-weight: bold; color: #2c3e50; }
+        QToolTip { font-weight: normal; background-color: #ffe089; border: 1px solid #bdc3c7; color: #2c3e50; padding: 2px; }
+        QComboBox, QSpinBox, QLineEdit, QTextEdit, QDateEdit { border: 1px solid #bdc3c7; border-radius: 4px; padding: 3px 5px; background-color: white; font-weight: normal; }
+        QGroupBox { border: 1px solid #bdc3c7; border-radius: 6px; margin-top: 15px; } 
+        QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; }
+        QPushButton { border: 1px solid #bdc3c7; border-radius: 4px; background-color: #f8f9fa; padding: 5px; }
+        QFrame#rowBlock { border: none; background-color: transparent; padding-bottom: 15px; }
+        QSplitter::handle { background-color: #dcdde1; border-left: 1px solid #bdc3c7; border-right: 1px solid #bdc3c7; }
+        QSplitter::handle:horizontal { width: 10px; }
+        QSplitter::handle:hover { background-color: #3498db; }
+      </string>
+    </property>
 
-    /* 2. INFOBULLES : Pas de gras, bordure fine */
-    QToolTip {
-        font-weight: normal;
-        background-color: #ffe089;
-        border: 1px solid #bdc3c7;
-        color: #2c3e50;
-        padding: 2px;
-    }
+    <layout class="QVBoxLayout" name="mainVerticalLayout">
+      <property name="spacing">
+        <number>10</number>
+      </property>
+      <property name="leftMargin">
+        <number>10</number>
+      </property>
+      <property name="topMargin">
+        <number>10</number>
+      </property>
+      <property name="rightMargin">
+        <number>10</number>
+      </property>
+      <property name="bottomMargin">
+        <number>10</number>
+      </property>
 
-    /* 3. CHAMPS DE SAISIE : Bordures arrondies et texte normal */
-    QComboBox, QSpinBox, QLineEdit, QTextEdit, QDateEdit {
-        border: 1px solid #bdc3c7;
-        border-radius: 4px;
-        padding: 3px 5px;
-        background-color: white;
-        selection-background-color: #3498db;
-        selection-color: white;
-        font-weight: normal;
-    }
+      <item>
+        <widget class="QSplitter" name="splitter">
+          <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+          </property>
+          
+          <widget class="QWidget" name="leftContainer">
+            <layout class="QVBoxLayout" name="leftSide">
+              <item>
+                <widget class="QLineEdit" name="txtSearch">
+                  <property name="placeholderText">
+                    <string>Filtrer les sites...</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="QListWidget" name="listSites">
+                  <property name="minimumSize">
+                    <size>
+                      <width>200</width>
+                      <height>0</height>
+                    </size>
+                  </property>
+                </widget>
+              </item>
+            </layout>
+          </widget>
 
-    /* Focus sur les champs */
-    QComboBox:focus, QSpinBox:focus, QLineEdit:focus, QTextEdit:focus, QDateEdit:focus {
-        border: 1px solid #3498db;
-    }
+          <widget class="QScrollArea" name="scrollArea">
+            <property name="widgetResizable">
+              <bool>true</bool>
+            </property>
+            
+            <widget class="QWidget" name="scrollAreaWidgetContents">
+              <layout class="QVBoxLayout" name="formVLayout">
+                
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QHBoxLayout">
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_rnx">
+                              <property name="text"><string>Lien RNX :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QComboBox" name="cbLienRNX"/>
+                          </item>
+                        </layout>
+                      </item>
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_num">
+                              <property name="text"><string>Surface RNX (m²) :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QSpinBox" name="spinRNX">
+                              <property name="minimum"><number>-1</number></property>
+                              <property name="maximum"><number>99999999</number></property>
+                              <property name="specialValueText"><string>-- À renseigner --</string></property>
+                              <property name="suffix"><string> m²</string></property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
 
-    /* 4. GROUPBOX : Cadre uniformisé */
-    QGroupBox { 
-        border: 1px solid #bdc3c7; 
-        border-radius: 6px; 
-        margin-top: 15px; 
-    } 
-    QGroupBox::title { 
-        subcontrol-origin: margin; 
-        left: 10px; 
-        padding: 0 5px; 
-    }
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QVBoxLayout">
+                      <item>
+                        <widget class="QLabel" name="label_militaire">
+                          <property name="text"><string>Terrain militaire :</string></property>
+                        </widget>
+                      </item>
+                      <item>
+                        <widget class="QComboBox" name="cbMilitaire"/>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
 
-    /* 5. BOUTONS */
-    QPushButton {
-        border: 1px solid #bdc3c7;
-        border-radius: 4px;
-        background-color: #f8f9fa;
-        padding: 5px;
-        font-weight: normal;
-    }
-    QPushButton:hover {
-        background-color: #e9ecef;
-    }
-   </string>
-  </property>
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QHBoxLayout">
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_contrats">
+                              <property name="text"><string>Nb contrats :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QSpinBox" name="spinContrats">
+                              <property name="minimum"><number>-1</number></property>
+                              <property name="specialValueText"><string>-- À renseigner --</string></property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </item>
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_agri">
+                              <property name="text"><string>Nb agriculteurs :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QSpinBox" name="spinAgri">
+                              <property name="minimum"><number>-1</number></property>
+                              <property name="specialValueText"><string>-- À renseigner --</string></property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </item>
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_surf_contrat">
+                              <property name="text"><string>Surf. contrat :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QSpinBox" name="spinSurfContrat">
+                              <property name="minimum"><number>-1</number></property>
+                              <property name="maximum"><number>99999999</number></property>
+                              <property name="specialValueText"><string>-- À renseigner --</string></property>
+                              <property name="suffix"><string> m²</string></property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
 
-  <widget class="QLineEdit" name="txtSearch">
-   <property name="geometry"><rect><x>20</x><y>20</y><width>250</width><height>25</height></rect></property>
-   <property name="placeholderText"><string>Filtrer les sites...</string></property>
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QVBoxLayout">
+                      <item>
+                        <widget class="QLabel" name="label_type_milieu">
+                          <property name="text"><string>Type de milieu :</string></property>
+                        </widget>
+                      </item>
+                      <item>
+                        <widget class="QComboBox" name="cbType_milieu"/>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QHBoxLayout">
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_nature">
+                              <property name="text"><string>Nature site INPN :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QComboBox" name="cbNatureInpn"/>
+                          </item>
+                        </layout>
+                      </item>
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_geol">
+                              <property name="text"><string>Géol. site INPN :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QComboBox" name="cbGeolInpn"/>
+                          </item>
+                        </layout>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QGroupBox" name="groupGeolDecision">
+                    <property name="title">
+                      <string>Code Géologique :</string>
+                    </property>
+                    <layout class="QGridLayout">
+                      <item row="0" column="0">
+                        <widget class="QLabel" name="lblGeol1">
+                          <property name="text"><string>1ère branche :</string></property>
+                        </widget>
+                      </item>
+                      <item row="1" column="0">
+                        <widget class="QComboBox" name="cbGeolStep1"/>
+                      </item>
+                      <item row="0" column="1">
+                        <widget class="QLabel" name="lblGeol2">
+                          <property name="text"><string>2nde branche :</string></property>
+                        </widget>
+                      </item>
+                      <item row="1" column="1">
+                        <widget class="QComboBox" name="cbGeolStep2"/>
+                      </item>
+                      <item row="2" column="0">
+                        <widget class="QLabel" name="lblGeol3">
+                          <property name="text"><string>3ème branche :</string></property>
+                        </widget>
+                      </item>
+                      <item row="3" column="0">
+                        <widget class="QComboBox" name="cbGeolStep3"/>
+                      </item>
+                      <item row="2" column="1">
+                        <widget class="QLabel" name="lblGeol4">
+                          <property name="text"><string>4ème branche :</string></property>
+                        </widget>
+                      </item>
+                      <item row="3" column="1">
+                        <widget class="QComboBox" name="cbGeolStep4"/>
+                      </item>
+                      <item row="4" column="0" colspan="2">
+                        <widget class="QLabel" name="lblGeolFinal">
+                          <property name="text"><string>Code final :</string></property>
+                        </widget>
+                      </item>
+                      <item row="5" column="0" colspan="2">
+                        <widget class="QLineEdit" name="txtGeolResult">
+                          <property name="readOnly"><bool>true</bool></property>
+                        </widget>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QHBoxLayout">
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_carto_hab">
+                              <property name="text"><string>Carto. habitats :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QComboBox" name="cbCartoHab"/>
+                          </item>
+                        </layout>
+                      </item>
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_typo_hab">
+                              <property name="text"><string>Typo. carto :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QComboBox" name="cbTypoHab"/>
+                          </item>
+                        </layout>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QHBoxLayout">
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_gestionnaire">
+                              <property name="text"><string>Gestionnaire :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QLineEdit" name="txtGestionnaire">
+                              <property name="placeholderText"><string>-- À renseigner --</string></property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </item>
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_surf_libre">
+                              <property name="text"><string>Surf. libre évolution :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QSpinBox" name="spinLibreEvo">
+                              <property name="minimum"><number>-1</number></property>
+                              <property name="maximum"><number>99999999</number></property>
+                              <property name="specialValueText"><string>-- À renseigner --</string></property>
+                              <property name="suffix"><string> m²</string></property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QHBoxLayout">
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_doc_pres">
+                              <property name="text"><string>Présence Doc Gestion :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QComboBox" name="cbDocPres"/>
+                          </item>
+                        </layout>
+                      </item>
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_doc_nom">
+                              <property name="text"><string>Nom du document :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QLineEdit" name="txtDocNom">
+                              <property name="placeholderText"><string>-- À renseigner --</string></property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QVBoxLayout">
+                      <item>
+                        <widget class="QLabel" name="label_doc_eval">
+                          <property name="text"><string>Évaluation Doc :</string></property>
+                        </widget>
+                      </item>
+                      <item>
+                        <widget class="QComboBox" name="cbDocEval"/>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QHBoxLayout">
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_date_ini">
+                              <property name="text"><string>Date initiale :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QDateEdit" name="dateIni">
+                              <property name="calendarPopup"><bool>true</bool></property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </item>
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_date_maj">
+                              <property name="text"><string>Date MàJ :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QDateEdit" name="dateMaj">
+                              <property name="calendarPopup"><bool>true</bool></property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </item>
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_date_fin">
+                              <property name="text"><string>Date fin :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QDateEdit" name="dateFin">
+                              <property name="calendarPopup"><bool>true</bool></property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QVBoxLayout">
+                      <item>
+                        <widget class="QLabel" name="label_surf_doc">
+                          <property name="text"><string>Surf. Doc Gestion :</string></property>
+                        </widget>
+                      </item>
+                      <item>
+                        <widget class="QSpinBox" name="spinSurfDoc">
+                          <property name="minimum"><number>-1</number></property>
+                          <property name="maximum"><number>99999999</number></property>
+                          <property name="specialValueText"><string>-- À renseigner --</string></property>
+                          <property name="suffix"><string> m²</string></property>
+                        </widget>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+
+                <item>
+                  <layout class="QVBoxLayout">
+                    <item>
+                      <widget class="QLabel" name="label_url_inpn">
+                        <property name="text"><string>URL INPN :</string></property>
+                      </widget>
+                    </item>
+                    <item>
+                      <widget class="QLineEdit" name="txtUrlInpn">
+                        <property name="placeholderText"><string>-- À renseigner --</string></property>
+                      </widget>
+                    </item>
+                  </layout>
+                </item>
+
+                <item>
+                  <layout class="QVBoxLayout">
+                    <item>
+                      <widget class="QLabel" name="label_url_cen">
+                        <property name="text"><string>URL CEN :</string></property>
+                      </widget>
+                    </item>
+                    <item>
+                      <widget class="QLineEdit" name="txtUrlCen">
+                        <property name="placeholderText"><string>-- À renseigner --</string></property>
+                      </widget>
+                    </item>
+                  </layout>
+                </item>
+
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QVBoxLayout">
+                      <item>
+                        <widget class="QLabel" name="label_ouverture">
+                          <property name="text"><string>Ouverture au public :</string></property>
+                        </widget>
+                      </item>
+                      <item>
+                        <widget class="QComboBox" name="cbOuverture"/>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QLabel" name="label_desc">
+                    <property name="text"><string>Description :</string></property>
+                  </widget>
+                </item>
+                <item>
+                  <widget class="QTextEdit" name="txtDescription">
+                    <property name="minimumSize">
+                      <size><width>0</width><height>80</height></size>
+                    </property>
+                    <property name="placeholderText"><string>-- À renseigner --</string></property>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QLabel" name="label_url_photo">
+                    <property name="text"><string>URL Photo :</string></property>
+                  </widget>
+                </item>
+                <item>
+                  <widget class="QLineEdit" name="txtUrlPhoto">
+                    <property name="placeholderText"><string>-- À renseigner --</string></property>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QFrame" name="rowBlock">
+                    <layout class="QHBoxLayout">
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_sensi">
+                              <property name="text"><string>Sensibilité :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QComboBox" name="cbSensibilite"/>
+                          </item>
+                        </layout>
+                      </item>
+                      <item>
+                        <layout class="QVBoxLayout">
+                          <item>
+                            <widget class="QLabel" name="label_diffusion">
+                              <property name="text"><string>Non diffusion :</string></property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QComboBox" name="cbNonDiffusion"/>
+                          </item>
+                        </layout>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+
+                <item>
+                  <widget class="QLabel" name="label_remq_sensi">
+                    <property name="text"><string>Remarque sensibilité :</string></property>
+                  </widget>
+                </item>
+                <item>
+                  <widget class="QTextEdit" name="txtRemqSensibilite">
+                    <property name="minimumSize">
+                      <size><width>0</width><height>60</height></size>
+                    </property>
+                    <property name="placeholderText"><string>-- À renseigner --</string></property>
+                  </widget>
+                </item>
+
+              </layout>
+            </widget>
+          </widget> </widget> </item>
+
+      <item>
+        <layout class="QHBoxLayout" name="bottomLayout">
+          <property name="spacing">
+            <number>10</number>
+          </property>
+          <item>
+            <spacer name="horizontalSpacer">
+              <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+                <enum>QSizePolicy::Expanding</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+                <size>
+                  <width>40</width>
+                  <height>20</height>
+                </size>
+              </property>
+            </spacer>
+          </item>
+          <item>
+            <widget class="QPushButton" name="btnApply">
+              <property name="text">
+                <string>Appliquer</string>
+              </property>
+              <property name="minimumSize">
+                <size>
+                  <width>100</width>
+                  <height>30</height>
+                </size>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QDialogButtonBox" name="button_box">
+              <property name="standardButtons">
+                <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+              </property>
+            </widget>
+          </item>
+        </layout>
+      </item>
+      
+    </layout>
   </widget>
-
-  <widget class="QListWidget" name="listSites">
-   <property name="geometry"><rect><x>20</x><y>55</y><width>250</width><height>485</height></rect></property>
-  </widget>
-
-  <widget class="QScrollArea" name="scrollArea">
-   <property name="geometry"><rect><x>280</x><y>20</y><width>610</width><height>520</height></rect></property>
-   <property name="verticalScrollBarPolicy"><enum>Qt::ScrollBarAlwaysOn</enum></property>
-   <property name="widgetResizable"><bool>true</bool></property>
-   
-   <widget class="QWidget" name="scrollAreaWidgetContents">
-    <property name="geometry"><rect><x>0</x><y>0</y><width>590</width><height>1750</height></rect></property>
-
-    <widget class="QLabel" name="label_rnx">
-     <property name="geometry"><rect><x>10</x><y>10</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Lien RNX :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbLienRNX">
-     <property name="geometry"><rect><x>10</x><y>35</y><width>280</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_num">
-     <property name="geometry"><rect><x>300</x><y>10</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Surface RNX (m²) :</string></property>
-    </widget>
-    <widget class="QSpinBox" name="spinRNX">
-     <property name="geometry"><rect><x>300</x><y>35</y><width>280</width><height>30</height></rect></property>
-     <property name="minimum"><number>-1</number></property>
-     <property name="specialValueText"><string>-- À renseigner --</string></property>
-     <property name="suffix"><string> m²</string></property>
-     <property name="maximum"><number>99999999</number></property>
-    </widget>
-
-    <widget class="QLabel" name="label_militaire">
-     <property name="geometry"><rect><x>10</x><y>80</y><width>580</width><height>20</height></rect></property>
-     <property name="text"><string>Terrain militaire :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbMilitaire">
-     <property name="geometry"><rect><x>10</x><y>105</y><width>580</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_contrats">
-     <property name="geometry"><rect><x>10</x><y>150</y><width>180</width><height>20</height></rect></property>
-     <property name="text"><string>Nb contrats :</string></property>
-    </widget>
-    <widget class="QSpinBox" name="spinContrats">
-     <property name="geometry"><rect><x>10</x><y>175</y><width>180</width><height>30</height></rect></property>
-     <property name="minimum"><number>-1</number></property>
-     <property name="specialValueText"><string>-- À renseigner --</string></property>
-    </widget>
-
-    <widget class="QLabel" name="label_agri">
-     <property name="geometry"><rect><x>200</x><y>150</y><width>190</width><height>20</height></rect></property>
-     <property name="text"><string>Nb agriculteurs :</string></property>
-    </widget>
-    <widget class="QSpinBox" name="spinAgri">
-     <property name="geometry"><rect><x>200</x><y>175</y><width>190</width><height>30</height></rect></property>
-     <property name="minimum"><number>-1</number></property>
-     <property name="specialValueText"><string>-- À renseigner --</string></property>
-    </widget>
-
-    <widget class="QLabel" name="label_surf_contrat">
-     <property name="geometry"><rect><x>400</x><y>150</y><width>190</width><height>20</height></rect></property>
-     <property name="text"><string>Surf. contrat (m²) :</string></property>
-    </widget>
-    <widget class="QSpinBox" name="spinSurfContrat">
-     <property name="geometry"><rect><x>400</x><y>175</y><width>190</width><height>30</height></rect></property>
-     <property name="minimum"><number>-1</number></property>
-     <property name="specialValueText"><string>-- À renseigner --</string></property>
-     <property name="suffix"><string> m²</string></property>
-     <property name="maximum"><number>99999999</number></property>
-    </widget>
-
-    <widget class="QLabel" name="label_type_milieu">
-     <property name="geometry"><rect><x>10</x><y>220</y><width>580</width><height>20</height></rect></property>
-     <property name="text"><string>Type de milieu :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbType_milieu">
-     <property name="geometry"><rect><x>10</x><y>245</y><width>580</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_nature">
-     <property name="geometry"><rect><x>10</x><y>290</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Nature site INPN :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbNatureInpn">
-     <property name="geometry"><rect><x>10</x><y>315</y><width>280</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_geol">
-     <property name="geometry"><rect><x>300</x><y>290</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Géol. site INPN :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbGeolInpn">
-     <property name="geometry"><rect><x>300</x><y>315</y><width>280</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QGroupBox" name="groupGeolDecision">
-     <property name="geometry">
-      <rect><x>10</x><y>360</y><width>580</width><height>250</height></rect>
-     </property>
-     <property name="title">
-      <string>Code Géologique :</string>
-     </property>
-     <property name="toolTip">
-      <string>Complétez les branches pour générer le code final automatiquement.</string>
-     </property>
-
-     <widget class="QLabel" name="lblGeol1">
-      <property name="geometry"><rect><x>10</x><y>30</y><width>275</width><height>20</height></rect></property>
-      <property name="text"><string>1ère branche :</string></property>
-     </widget>
-     <widget class="QComboBox" name="cbGeolStep1">
-      <property name="geometry"><rect><x>10</x><y>55</y><width>275</width><height>30</height></rect></property>
-     </widget>
-
-     <widget class="QLabel" name="lblGeol2">
-      <property name="geometry"><rect><x>295</x><y>30</y><width>275</width><height>20</height></rect></property>
-      <property name="text"><string>2nde branche :</string></property>
-     </widget>
-     <widget class="QComboBox" name="cbGeolStep2">
-      <property name="geometry"><rect><x>295</x><y>55</y><width>275</width><height>30</height></rect></property>
-     </widget>
-
-     <widget class="QLabel" name="lblGeol3">
-      <property name="geometry"><rect><x>10</x><y>95</y><width>275</width><height>20</height></rect></property>
-      <property name="text"><string>3ème branche :</string></property>
-     </widget>
-     <widget class="QComboBox" name="cbGeolStep3">
-      <property name="geometry"><rect><x>10</x><y>120</y><width>275</width><height>30</height></rect></property>
-     </widget>
-
-     <widget class="QLabel" name="lblGeol4">
-      <property name="geometry"><rect><x>295</x><y>95</y><width>275</width><height>20</height></rect></property>
-      <property name="text"><string>4ème branche :</string></property>
-     </widget>
-     <widget class="QComboBox" name="cbGeolStep4">
-      <property name="geometry"><rect><x>295</x><y>120</y><width>275</width><height>30</height></rect></property>
-     </widget>
-
-     <widget class="QLabel" name="lblGeolFinal">
-      <property name="geometry"><rect><x>10</x><y>170</y><width>560</width><height>20</height></rect></property>
-      <property name="text"><string>Code final calculé :</string></property>
-     </widget>
-     <widget class="QLineEdit" name="txtGeolResult">
-      <property name="geometry"><rect><x>10</x><y>195</y><width>560</width><height>35</height></rect></property>
-      <property name="readOnly"><bool>true</bool></property>
-      <property name="styleSheet"><string>background-color: #ecf0f1; border: 1px solid #bdc3c7;</string></property>
-     </widget>
-    </widget>
-
-    <widget class="QLabel" name="label_carto_hab">
-     <property name="geometry"><rect><x>10</x><y>630</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Carto. habitats :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbCartoHab">
-     <property name="geometry"><rect><x>10</x><y>655</y><width>280</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_typo_hab">
-     <property name="geometry"><rect><x>300</x><y>630</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Typo. carto :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbTypoHab">
-     <property name="geometry"><rect><x>300</x><y>655</y><width>280</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_gestionnaire">
-     <property name="geometry"><rect><x>10</x><y>700</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Gestionnaire du site :</string></property>
-    </widget>
-    <widget class="QLineEdit" name="txtGestionnaire">
-     <property name="geometry"><rect><x>10</x><y>725</y><width>280</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_surf_libre">
-     <property name="geometry"><rect><x>300</x><y>700</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Surf. libre évolution (m²) :</string></property>
-    </widget>
-    <widget class="QSpinBox" name="spinLibreEvo">
-     <property name="geometry"><rect><x>300</x><y>725</y><width>280</width><height>30</height></rect></property>
-     <property name="minimum"><number>-1</number></property>
-     <property name="specialValueText"><string>-- À renseigner --</string></property>
-     <property name="suffix"><string> m²</string></property>
-    </widget>
-
-    <widget class="QLabel" name="label_doc_pres">
-     <property name="geometry"><rect><x>10</x><y>770</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Présence Doc Gestion :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbDocPres">
-     <property name="geometry"><rect><x>10</x><y>795</y><width>280</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_doc_nom">
-     <property name="geometry"><rect><x>300</x><y>770</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Nom du document :</string></property>
-    </widget>
-    <widget class="QLineEdit" name="txtDocNom">
-     <property name="geometry"><rect><x>300</x><y>795</y><width>280</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_doc_eval">
-     <property name="geometry"><rect><x>10</x><y>840</y><width>580</width><height>20</height></rect></property>
-     <property name="text"><string>Évaluation Doc :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbDocEval">
-     <property name="geometry"><rect><x>10</x><y>865</y><width>580</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_date_ini">
-     <property name="geometry"><rect><x>10</x><y>910</y><width>180</width><height>20</height></rect></property>
-     <property name="text"><string>Date initiale :</string></property>
-    </widget>
-    <widget class="QDateEdit" name="dateIni">
-     <property name="geometry"><rect><x>10</x><y>935</y><width>180</width><height>30</height></rect></property>
-     <property name="calendarPopup"><bool>true</bool></property>
-    </widget>
-
-    <widget class="QLabel" name="label_date_maj">
-     <property name="geometry"><rect><x>200</x><y>910</y><width>190</width><height>20</height></rect></property>
-     <property name="text"><string>Date MàJ :</string></property>
-    </widget>
-    <widget class="QDateEdit" name="dateMaj">
-     <property name="geometry"><rect><x>200</x><y>935</y><width>190</width><height>30</height></rect></property>
-     <property name="calendarPopup"><bool>true</bool></property>
-    </widget>
-
-    <widget class="QLabel" name="label_date_fin">
-     <property name="geometry"><rect><x>400</x><y>910</y><width>190</width><height>20</height></rect></property>
-     <property name="text"><string>Date fin :</string></property>
-    </widget>
-    <widget class="QDateEdit" name="dateFin">
-     <property name="geometry"><rect><x>400</x><y>935</y><width>190</width><height>30</height></rect></property>
-     <property name="calendarPopup"><bool>true</bool></property>
-    </widget>
-
-    <widget class="QLabel" name="label_surf_doc">
-     <property name="geometry"><rect><x>10</x><y>980</y><width>580</width><height>20</height></rect></property>
-     <property name="text"><string>Surf. Doc Gestion (m²) :</string></property>
-    </widget>
-    <widget class="QSpinBox" name="spinSurfDoc">
-     <property name="geometry"><rect><x>10</x><y>1005</y><width>580</width><height>30</height></rect></property>
-     <property name="minimum"><number>-1</number></property>
-     <property name="specialValueText"><string>-- À renseigner --</string></property>
-     <property name="suffix"><string> m²</string></property>
-    </widget>
-
-    <widget class="QLabel" name="label_url_inpn">
-     <property name="geometry"><rect><x>10</x><y>1050</y><width>580</width><height>20</height></rect></property>
-     <property name="text"><string>URL Fiche INPN :</string></property>
-    </widget>
-    <widget class="QLineEdit" name="txtUrlInpn">
-     <property name="geometry"><rect><x>10</x><y>1075</y><width>580</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_url_cen">
-     <property name="geometry"><rect><x>10</x><y>1120</y><width>580</width><height>20</height></rect></property>
-     <property name="text"><string>URL Fiche CEN :</string></property>
-    </widget>
-    <widget class="QLineEdit" name="txtUrlCen">
-     <property name="geometry"><rect><x>10</x><y>1145</y><width>580</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_ouverture">
-     <property name="geometry"><rect><x>10</x><y>1190</y><width>580</width><height>20</height></rect></property>
-     <property name="text"><string>Ouverture au public :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbOuverture">
-     <property name="geometry"><rect><x>10</x><y>1215</y><width>580</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_desc">
-     <property name="geometry"><rect><x>10</x><y>1260</y><width>580</width><height>20</height></rect></property>
-     <property name="text"><string>Description du site :</string></property>
-    </widget>
-    <widget class="QTextEdit" name="txtDescription">
-     <property name="geometry"><rect><x>10</x><y>1285</y><width>580</width><height>120</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_url_photo">
-     <property name="geometry"><rect><x>10</x><y>1420</y><width>580</width><height>20</height></rect></property>
-     <property name="text"><string>URL Photo :</string></property>
-    </widget>
-    <widget class="QLineEdit" name="txtUrlPhoto">
-     <property name="geometry"><rect><x>10</x><y>1445</y><width>580</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_sensi">
-     <property name="geometry"><rect><x>10</x><y>1490</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Sensibilité :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbSensibilite">
-     <property name="geometry"><rect><x>10</x><y>1515</y><width>280</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_diffusion">
-     <property name="geometry"><rect><x>300</x><y>1490</y><width>280</width><height>20</height></rect></property>
-     <property name="text"><string>Non diffusion :</string></property>
-    </widget>
-    <widget class="QComboBox" name="cbNonDiffusion">
-     <property name="geometry"><rect><x>300</x><y>1515</y><width>280</width><height>30</height></rect></property>
-    </widget>
-
-    <widget class="QLabel" name="label_remq_sensi">
-     <property name="geometry"><rect><x>10</x><y>1560</y><width>580</width><height>20</height></rect></property>
-     <property name="text"><string>Remarque sensibilité :</string></property>
-    </widget>
-    <widget class="QTextEdit" name="txtRemqSensibilite">
-     <property name="geometry"><rect><x>10</x><y>1585</y><width>580</width><height>100</height></rect></property>
-    </widget>
-
-   </widget>
-  </widget>
-
-  <widget class="QPushButton" name="btnApply">
-   <property name="geometry"><rect><x>570</x><y>555</y><width>100</width><height>30</height></rect></property>
-   <property name="text"><string>Appliquer</string></property>
-  </widget>
-
-  <widget class="QDialogButtonBox" name="button_box">
-   <property name="geometry"><rect><x>680</x><y>555</y><width>200</width><height>30</height></rect></property>
-   <property name="standardButtons"><set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set></property>
-  </widget>
-
- </widget>
 </ui>
